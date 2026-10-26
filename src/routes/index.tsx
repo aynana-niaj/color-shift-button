@@ -1,24 +1,39 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Colour Button" },
+      { name: "description", content: "A button that changes colour every time you click it." },
+      { property: "og:title", content: "Colour Button" },
+      { property: "og:description", content: "A button that changes colour every time you click it." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
+const COLOURS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+];
+
 function Index() {
+  const [i, setI] = useState(0);
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="flex min-h-screen items-center justify-center bg-background">
+      <button
+        onClick={() => setI((i + 1) % COLOURS.length)}
+        style={{ backgroundColor: COLOURS[i] }}
+        className="rounded-full px-10 py-5 text-xl font-semibold text-primary-foreground shadow-lg transition-all duration-300 hover:scale-105 active:scale-95"
+      >
+        Click me
+      </button>
+    </main>
   );
 }

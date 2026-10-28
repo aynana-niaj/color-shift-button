@@ -33,6 +33,14 @@ const isColoured = (p: Phase) => p === "idle" || p === "over";
 // ---------- Sound (generated with the Web Audio API, no files needed) ----------
 let ctx: AudioContext | null = null;
 const audio = () => (ctx ??= new AudioContext());
+// Sound is a bonus: if the browser blocks it, the game must still work.
+const safe = (fn: () => void) => {
+  try {
+    fn();
+  } catch {
+    /* ignore sound errors */
+  }
+};
 
 function playPop() {
   const ac = audio();
@@ -125,7 +133,8 @@ function Index() {
   // Countdown: ticks once per second while playing, ends the game at zero.
   useEffect(() => {
     if (phase !== "playing") return;
-    const stopMusic = startMusic();
+    let stopMusic = () => {};
+    safe(() => (stopMusic = startMusic()));
     const id = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
@@ -137,12 +146,12 @@ function Index() {
     }, 1000);
     return () => {
       clearInterval(id);
-      stopMusic();
+      safe(stopMusic);
     };
   }, [phase]);
 
   const start = () => {
-    audio().resume();
+    safe(() => void audio().resume().catch(() => {}));
     setScore(0);
     setTimeLeft(GAME_SECONDS);
     setReadyLeft(READY_SECONDS);
@@ -164,7 +173,7 @@ function Index() {
       setPops((ps) => [...ps, p]);
       setTimeout(() => setPops((ps) => ps.filter((q) => q.id !== p.id)), 500);
     }
-    playPop();
+    safe(playPop);
     setScore((s) => s + 1);
     setDot(randomSpot());
     setDotKey((k) => k + 1);

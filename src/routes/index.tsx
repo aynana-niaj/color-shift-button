@@ -72,7 +72,7 @@ function startMusic() {
     const o = ac.createOscillator();
     const g = ac.createGain();
     o.type = "triangle";
-    o.frequency.value = notes[step++ % notes.length];
+    o.frequency.value = notes[step++ % notes.length] ?? 523;
     g.gain.setValueAtTime(1, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
     o.connect(g).connect(master);

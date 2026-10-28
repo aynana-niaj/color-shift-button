@@ -64,10 +64,13 @@ function Index() {
         Click the <span style={{ color: "var(--chart-1)" }}>Dot</span>
       </h1>
 
-      <div className="flex w-full max-w-xl justify-between rounded-full bg-muted px-6 py-3 text-lg font-semibold text-foreground">
-        <span>⏱ {timeLeft}s</span>
-        <span>⭐ {score}</span>
-      </div>
+      {/* Hidden once the game is over: the score screen below already shows the result. */}
+      {phase !== "over" && (
+        <div className="flex w-full max-w-xl justify-between rounded-full bg-muted px-6 py-3 text-lg font-semibold text-foreground">
+          <span>⏱ {timeLeft}s</span>
+          <span>⭐ {score}</span>
+        </div>
+      )}
 
       {/* Fixed game area */}
       <div className="relative aspect-square w-full max-w-xl overflow-hidden rounded-3xl border-4 border-dashed border-border bg-card shadow-lg">

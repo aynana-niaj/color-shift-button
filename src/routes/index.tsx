@@ -25,10 +25,17 @@ const COLOURS = [
 
 function Index() {
   const [i, setI] = useState(0);
+
+  // Previous logic: step to the next colour in order (0 -> 1 -> 2 -> 3 -> 4 -> 0 ...).
+  // Kept here for reference in case we ever want the ordered cycle back:
+  //   const next = () => setI((i + 1) % COLOURS.length);
+
+  const next = () => setI(Math.floor(Math.random() * COLOURS.length));
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-background">
       <button
-        onClick={() => setI((i + 1) % COLOURS.length)}
+        onClick={next}
         style={{ backgroundColor: COLOURS[i] }}
         className="rounded-full px-10 py-5 text-xl font-semibold text-primary-foreground shadow-lg transition-all duration-300 hover:scale-105 active:scale-95"
       >

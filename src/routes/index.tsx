@@ -186,15 +186,34 @@ function Index() {
   const bigButton =
     "rounded-full bg-pop-foreground px-10 py-4 text-2xl font-semibold text-pop shadow-lg transition-transform hover:scale-105 active:scale-95";
 
+  const title = (big: boolean) => (
+    <h1 className={cn("relative font-bold tracking-tight", big ? "text-6xl sm:text-7xl" : "text-4xl sm:text-5xl")}>
+      Pop The D
+      {phase === "idle" ? (
+        <span className="relative inline-block">
+          <span className="inline-block" style={{ animation: "o-burst 2.4s ease-in-out infinite" }}>o</span>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-[58%] rounded-full border-4 border-pop-foreground"
+            style={{ width: "0.6em", height: "0.6em", animation: "o-ring 2.4s ease-out infinite" }}
+          />
+        </span>
+      ) : (
+        "o"
+      )}
+      t
+    </h1>
+  );
+
   return (
     <main
       className={cn(
-        "relative flex min-h-screen flex-col items-center justify-center gap-6 overflow-hidden p-4 transition-colors duration-700",
+        "relative flex h-dvh flex-col items-center justify-center gap-4 overflow-hidden p-4 transition-colors duration-700",
         coloured ? "text-pop-foreground" : "text-pop",
       )}
       style={{ backgroundColor: coloured ? "var(--pop)" : "var(--background)" }}
     >
-      {/* Radial colour sweep from the top-left corner */}
+      {/* Radial colour sweep: into play from bottom-right, out of play from top-left */}
       {sweepKey > 0 && (
         <div
           key={sweepKey}
@@ -202,97 +221,90 @@ function Index() {
           className="pointer-events-none fixed inset-0"
           style={{
             backgroundColor: coloured ? "var(--pop)" : "var(--background)",
-            animation: "sweep 700ms ease-out forwards",
+            animation: `${coloured ? "sweep-out" : "sweep-in"} 700ms ease-out forwards`,
           }}
         />
       )}
 
-      <h1 className="relative text-5xl font-bold tracking-tight sm:text-6xl">Pop The Dot</h1>
-
-      {/* Timer + score bar (hidden but space-keeping outside play) */}
-      <div className={cn("relative w-full max-w-xl space-y-2", phase !== "playing" && "invisible")}>
-        <div className="flex justify-between rounded-full bg-muted px-6 py-3 text-xl font-semibold">
-          <span>⏱ {timeLeft}s</span>
-          <span>⭐ {score}</span>
+      {phase === "idle" && (
+        <div className="relative flex flex-col items-center gap-6 text-center">
+          {title(true)}
+          <p className="text-xl">Pop as many dots as you can in {GAME_SECONDS} seconds.</p>
+          <button onClick={start} className={bigButton}>
+            Start
+          </button>
         </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+      )}
+
+      {phase === "over" && (
+        <div className="relative flex flex-col items-center gap-5 text-center">
+          {title(true)}
+          <p className="text-2xl">Time's up!</p>
+          <p className="text-5xl font-bold sm:text-6xl">
+            ⭐ {score} {score === 1 ? "dot" : "dots"} popped
+          </p>
+          <button onClick={start} className={cn(bigButton, "mt-2")}>
+            Restart
+          </button>
+        </div>
+      )}
+
+      {!coloured && (
+        <>
+          {title(false)}
+          <div className={cn("relative w-full max-w-xl space-y-2", phase !== "playing" && "invisible")}>
+            <div className="flex justify-between rounded-full bg-muted px-6 py-3 text-xl font-semibold">
+              <span>⏱ {timeLeft}s</span>
+              <span>⭐ {score}</span>
+            </div>
+            <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full transition-all duration-1000 ease-linear"
+                style={{ width: `${pct * 100}%`, backgroundColor: barColour }}
+              />
+            </div>
+          </div>
+
           <div
-            className="h-full rounded-full transition-all duration-1000 ease-linear"
-            style={{ width: `${pct * 100}%`, backgroundColor: barColour }}
-          />
-        </div>
-      </div>
+            ref={areaRef}
+            className="relative aspect-square overflow-hidden rounded-3xl border-4 border-dashed border-border bg-card shadow-lg"
+            style={{ width: "min(100%, 36rem, calc(100dvh - 15rem))" }}
+          >
+            {phase === "playing" && (
+              <button
+                key={dotKey}
+                aria-label="Dot"
+                onClick={hitDot}
+                className="absolute rounded-full bg-pop shadow-md hover:brightness-110"
+                style={{
+                  width: DOT_SIZE,
+                  height: DOT_SIZE,
+                  left: `calc((100% - ${DOT_SIZE}px) * ${dot.x})`,
+                  top: `calc((100% - ${DOT_SIZE}px) * ${dot.y})`,
+                  animation: "dot-in 150ms ease-out",
+                }}
+              />
+            )}
 
-      {/* Game area: box only visible while getting ready / playing */}
-      <div
-        ref={areaRef}
-        className={cn(
-          "relative aspect-square w-full max-w-xl overflow-hidden rounded-3xl border-4 transition-all duration-500",
-          coloured ? "border-transparent" : "border-dashed border-border bg-card shadow-lg",
-        )}
-      >
-        {phase === "playing" && (
-          <button
-            key={dotKey}
-            aria-label="Dot"
-            onClick={hitDot}
-            className="absolute rounded-full bg-pop shadow-md hover:brightness-110"
-            style={{
-              width: DOT_SIZE,
-              height: DOT_SIZE,
-              left: `calc((100% - ${DOT_SIZE}px) * ${dot.x})`,
-              top: `calc((100% - ${DOT_SIZE}px) * ${dot.y})`,
-              animation: "dot-in 150ms ease-out",
-            }}
-          />
-        )}
-
-        {/* Burst animations */}
-        {pops.map((p) => (
-          <div key={p.id} className="pointer-events-none absolute" style={{ left: p.x, top: p.y }}>
-            <span
-              className="absolute rounded-full border-4 border-pop"
-              style={{ width: DOT_SIZE, height: DOT_SIZE, animation: "pop-ring 400ms ease-out forwards" }}
-            />
-            {Array.from({ length: 8 }).map((_, i) => (
+            {pops.map((p) => (
               <span
-                key={i}
-                className="absolute h-2.5 w-2.5 rounded-full bg-pop"
-                style={{ ["--a" as string]: `${i * 45}deg`, animation: "pop-bit 450ms ease-out forwards" }}
+                key={p.id}
+                className="pointer-events-none absolute rounded-full border-4 border-pop"
+                style={{ left: p.x, top: p.y, width: DOT_SIZE, height: DOT_SIZE, animation: "pop-ring 400ms ease-out forwards" }}
               />
             ))}
-          </div>
-        ))}
 
-        {phase === "ready" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <p className="text-2xl font-medium">Get ready…</p>
-            <p key={readyLeft} className="text-8xl font-bold" style={{ animation: "ready-pulse 600ms ease-out" }}>
-              {readyLeft}
-            </p>
+            {phase === "ready" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                <p className="text-2xl font-medium">Get ready…</p>
+                <p key={readyLeft} className="text-8xl font-bold" style={{ animation: "ready-pulse 600ms ease-out" }}>
+                  {readyLeft}
+                </p>
+              </div>
+            )}
           </div>
-        )}
-
-        {phase === "idle" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 p-6 text-center">
-            <p className="text-xl">Pop as many dots as you can in {GAME_SECONDS} seconds.</p>
-            <button onClick={start} className={bigButton}>
-              Start
-            </button>
-          </div>
-        )}
-
-        {phase === "over" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
-            <p className="text-2xl">Time's up!</p>
-            <p className="text-7xl font-bold">⭐ {score}</p>
-            <p className="text-xl">{score === 1 ? "dot" : "dots"} popped</p>
-            <button onClick={start} className={cn(bigButton, "mt-2")}>
-              Restart
-            </button>
-          </div>
-        )}
-      </div>
+        </>
+      )}
     </main>
   );
 }

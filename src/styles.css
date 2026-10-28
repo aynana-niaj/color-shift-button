@@ -149,9 +149,26 @@
   --color-star: var(--star);
 }
 
-@keyframes sweep {
+@keyframes sweep-in {
+  from { clip-path: circle(0% at 100% 100%); }
+  to { clip-path: circle(150% at 100% 100%); }
+}
+@keyframes sweep-out {
   from { clip-path: circle(0% at 0% 0%); }
   to { clip-path: circle(150% at 0% 0%); }
+}
+@keyframes o-burst {
+  0%, 40% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 1; }
+  55% { transform: scale(0); opacity: 0; }
+  80% { transform: scale(0); opacity: 0; }
+  92% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes o-ring {
+  0%, 52% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+  55% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+  75%, 100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
 }
 @keyframes pop-ring {
   from { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }

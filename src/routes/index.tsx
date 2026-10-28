@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -64,7 +65,14 @@ function Index() {
         Click the <span style={{ color: "var(--chart-1)" }}>Dot</span>
       </h1>
 
-      <div className="flex w-full max-w-xl justify-between rounded-full bg-muted px-6 py-3 text-lg font-semibold text-foreground">
+      {/* On the score screen the bar is hidden (its numbers are already shown as the result),
+          but its space is kept so the game area doesn't jump. */}
+      <div
+        className={cn(
+          "flex w-full max-w-xl justify-between rounded-full bg-muted px-6 py-3 text-lg font-semibold text-foreground",
+          phase === "over" && "invisible",
+        )}
+      >
         <span>⏱ {timeLeft}s</span>
         <span>⭐ {score}</span>
       </div>

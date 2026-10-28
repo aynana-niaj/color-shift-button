@@ -132,6 +132,45 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+:root {
+  /* Game colours */
+  --pop: oklch(0.66 0.21 25);
+  --pop-foreground: oklch(1 0 0);
+  --star: oklch(0.85 0.17 85);
+  --timer-ok: oklch(0.72 0.17 150);
+  --timer-warn: oklch(0.85 0.17 85);
+  --timer-danger: oklch(0.63 0.24 27);
+}
+
+@theme inline {
+  --font-sans: "Fredoka", ui-rounded, system-ui, sans-serif;
+  --color-pop: var(--pop);
+  --color-pop-foreground: var(--pop-foreground);
+  --color-star: var(--star);
+}
+
+@keyframes sweep {
+  from { clip-path: circle(0% at 0% 0%); }
+  to { clip-path: circle(150% at 0% 0%); }
+}
+@keyframes pop-ring {
+  from { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+  to { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+@keyframes pop-bit {
+  from { transform: translate(-50%, -50%) rotate(var(--a)) translateY(0) scale(1); opacity: 1; }
+  to { transform: translate(-50%, -50%) rotate(var(--a)) translateY(-48px) scale(0.3); opacity: 0; }
+}
+@keyframes ready-pulse {
+  0% { transform: scale(0.4); opacity: 0; }
+  30% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes dot-in {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -140,5 +179,6 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
   }
 }

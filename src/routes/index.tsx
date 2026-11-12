@@ -247,9 +247,9 @@ function Index() {
               Restart
             </button>
           </div>
-          {/* Game title sits in the bottom-left footer on the score page */}
-          <footer className="absolute bottom-4 left-4">
-            {title(false)}
+          {/* Game name as a small footer, bottom-left, on the score page */}
+          <footer className="absolute bottom-4 left-4 text-base font-medium">
+            Pop The Dot
           </footer>
         </>
       )}

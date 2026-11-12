@@ -237,23 +237,28 @@ function Index() {
       )}
 
       {phase === "over" && (
-        <div className="relative flex flex-col items-center gap-5 text-center">
-          {title(true)}
-          <p className="text-2xl">Time's up!</p>
-          <p className="text-5xl font-bold sm:text-6xl">
-            ⭐ {score} {score === 1 ? "dot" : "dots"} popped
-          </p>
-          <button onClick={start} className={cn(bigButton, "mt-2")}>
-            Restart
-          </button>
-        </div>
+        <>
+          <div className="relative flex flex-col items-center gap-5 text-center">
+            <p className="text-2xl">Time's up!</p>
+            <p className="text-5xl font-bold sm:text-6xl">
+              ⭐ {score} {score === 1 ? "dot" : "dots"} popped
+            </p>
+            <button onClick={start} className={cn(bigButton, "mt-2")}>
+              Restart
+            </button>
+          </div>
+          {/* Game title sits in the bottom-left footer on the score page */}
+          <footer className="absolute bottom-4 left-4">
+            {title(false)}
+          </footer>
+        </>
       )}
 
       {!coloured && (
         <>
           {title(false)}
           <div className={cn("relative w-full max-w-xl space-y-2", phase !== "playing" && "invisible")}>
-            <div className="flex justify-between rounded-full bg-muted px-6 py-3 text-xl font-semibold">
+            <div className="flex justify-between rounded-full bg-muted px-6 py-3 text-xl font-semibold text-foreground">
               <span>⏱ {timeLeft}s</span>
               <span>⭐ {score}</span>
             </div>

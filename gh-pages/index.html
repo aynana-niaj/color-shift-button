@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pop The Dot</title>
+  <meta name="description" content="Pop as many dots as you can in 20 seconds." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap"
+  />
+  <style>
+    :root {
+      --pop: oklch(0.66 0.21 25);
+      --pop-foreground: oklch(1 0 0);
+      --background: oklch(1 0 0);
+      --foreground: oklch(0.129 0.042 264.695);
+      --muted: oklch(0.968 0.007 247.896);
+      --card: oklch(1 0 0);
+      --border: oklch(0.929 0.013 255.508);
+      --timer-ok: oklch(0.72 0.17 150);
+      --timer-warn: oklch(0.85 0.17 85);
+      --timer-danger: oklch(0.63 0.24 27);
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: "Fredoka", ui-rounded, system-ui, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+    }
+
+    main {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      height: 100dvh;
+      overflow: hidden;
+      padding: 1rem;
+      transition: background-color 700ms;
+    }
+    main.coloured { background: var(--pop); color: var(--pop-foreground); }
+    main.plain { background: var(--background); color: var(--pop); }
+
+    .hidden { display: none !important; }
+
+    h1 { position: relative; font-weight: 700; letter-spacing: -0.025em; }
+    h1.big { font-size: clamp(3rem, 10vw, 4.5rem); }
+    h1.small { font-size: clamp(1.75rem, 5vw, 3rem); }
+
+    .big-btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 9999px;
+      background: var(--pop-foreground);
+      color: var(--pop);
+      padding: 1rem 2.5rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+      font-family: inherit;
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      transition: transform 150ms;
+    }
+    .big-btn:hover { transform: scale(1.05); }
+    .big-btn:active { transform: scale(0.95); }
+
+    .screen { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; text-align: center; }
+    .subtext { font-size: 1.25rem; }
+    .times-up { font-size: 1.5rem; }
+    .final-score { font-size: clamp(2.25rem, 8vw, 3.75rem); font-weight: 700; white-space: nowrap; }
+
+    .score-footer { position: absolute; bottom: 1rem; left: 1rem; }
+
+    .hud { position: relative; width: 100%; max-width: 36rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .hud.invisible { visibility: hidden; }
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      border-radius: 9999px;
+      background: var(--muted);
+      color: var(--foreground);
+      padding: 0.75rem 1.5rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .bar-track { height: 0.75rem; width: 100%; overflow: hidden; border-radius: 9999px; background: var(--muted); }
+    .bar-fill { height: 100%; border-radius: 9999px; transition: width 1000ms linear, background-color 300ms; }
+
+    #area {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      width: min(100%, 36rem, calc(100dvh - 15rem));
+      overflow: hidden;
+      border-radius: 1.5rem;
+      border: 4px dashed var(--border);
+      background: var(--card);
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+
+    #dot {
+      position: absolute;
+      width: 56px;
+      height: 56px;
+      border: 0;
+      cursor: pointer;
+      border-radius: 9999px;
+      background: var(--pop);
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      animation: dot-in 150ms ease-out;
+    }
+    #dot:hover { filter: brightness(1.1); }
+
+    .pop-ring {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 9999px;
+      border: 4px solid var(--pop);
+      width: 56px;
+      height: 56px;
+      animation: pop-ring 400ms ease-out forwards;
+    }
+
+    #ready-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      color: var(--pop);
+    }
+    #ready-overlay p:first-child { font-size: 1.5rem; font-weight: 500; }
+    #ready-count { font-size: 6rem; font-weight: 700; animation: ready-pulse 600ms ease-out; }
+
+    #sweep {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .o-wrap { position: relative; display: inline-block; }
+    .o-letter { display: inline-block; animation: o-burst 2.4s ease-in-out infinite; }
+    .o-ring {
+      position: absolute;
+      left: 50%;
+      top: 58%;
+      width: 0.6em;
+      height: 0.6em;
+      border-radius: 9999px;
+      border: 4px solid var(--pop-foreground);
+      pointer-events: none;
+      animation: o-ring 2.4s ease-out infinite;
+    }
+
+    @keyframes sweep-in {
+      from { clip-path: circle(0% at 100% 100%); }
+      to { clip-path: circle(150% at 100% 100%); }
+    }
+    @keyframes sweep-out {
+      from { clip-path: circle(0% at 0% 0%); }
+      to { clip-path: circle(150% at 0% 0%); }
+    }
+    @keyframes o-burst {
+      0%, 40% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 1; }
+      55% { transform: scale(0); opacity: 0; }
+      80% { transform: scale(0); opacity: 0; }
+      92% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes o-ring {
+      0%, 52% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+      55% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+      75%, 100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+    }
+    @keyframes pop-ring {
+      from { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+      to { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+    }
+    @keyframes ready-pulse {
+      0% { transform: scale(0.4); opacity: 0; }
+      30% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes dot-in {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <main id="app" class="coloured">
+    <div id="sweep" class="hidden"></div>
+
+    <!-- Start screen -->
+    <div id="screen-start" class="screen">
+      <h1 class="big">
+        Pop The D<span class="o-wrap"><span class="o-letter">o</span><span class="o-ring" aria-hidden="true"></span></span>t
+      </h1>
+      <p class="subtext">Pop as many dots as you can in 20 seconds.</p>
+      <button class="big-btn" id="btn-start">Start</button>
+    </div>
+
+    <!-- Score screen -->
+    <div id="screen-over" class="screen hidden">
+      <p class="times-up">Time's up!</p>
+      <p class="final-score" id="final-score">⭐ 0 dots popped</p>
+      <button class="big-btn" id="btn-restart">Restart</button>
+    </div>
+    <footer id="score-footer" class="score-footer hidden">
+      <h1 class="small">Pop The Dot</h1>
+    </footer>
+
+    <!-- Play screen -->
+    <h1 id="play-title" class="small hidden">Pop The Dot</h1>
+    <div id="hud" class="hud invisible hidden">
+      <div class="hud-row">
+        <span id="hud-time">⏱ 20s</span>
+        <span id="hud-score">⭐ 0</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="bar-fill" style="width: 100%; background: var(--timer-ok);"></div></div>
+    </div>
+    <div id="area" class="hidden">
+      <button id="dot" aria-label="Dot" class="hidden"></button>
+      <div id="ready-overlay" class="hidden">
+        <p>Get ready…</p>
+        <p id="ready-count">3</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const GAME_SECONDS = 20;
+    const READY_SECONDS = 3;
+    const DOT_SIZE = 56;
+
+    const app = document.getElementById("app");
+    const sweep = document.getElementById("sweep");
+    const screenStart = document.getElementById("screen-start");
+    const screenOver = document.getElementById("screen-over");
+    const scoreFooter = document.getElementById("score-footer");
+    const finalScore = document.getElementById("final-score");
+    const playTitle = document.getElementById("play-title");
+    const hud = document.getElementById("hud");
+    const hudTime = document.getElementById("hud-time");
+    const hudScore = document.getElementById("hud-score");
+    const barFill = document.getElementById("bar-fill");
+    const area = document.getElementById("area");
+    const dot = document.getElementById("dot");
+    const readyOverlay = document.getElementById("ready-overlay");
+    const readyCount = document.getElementById("ready-count");
+
+    let phase = "idle"; // idle | ready | playing | over
+    let score = 0;
+    let timeLeft = GAME_SECONDS;
+    let readyTimer = null;
+    let gameTimer = null;
+    let stopMusic = () => {};
+
+    // ---------- Sound (Web Audio API, no files needed) ----------
+    let ctx = null;
+    const audio = () => (ctx ??= new (window.AudioContext || window.webkitAudioContext)());
+    const safe = (fn) => { try { fn(); } catch { /* sound is a bonus */ } };
+
+    function playPop() {
+      const ac = audio();
+      const t = ac.currentTime;
+      const buf = ac.createBuffer(1, ac.sampleRate * 0.05, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 3;
+      const noise = ac.createBufferSource();
+      noise.buffer = buf;
+      const ng = ac.createGain();
+      ng.gain.value = 0.5;
+      noise.connect(ng).connect(ac.destination);
+      noise.start(t);
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.frequency.setValueAtTime(900, t);
+      o.frequency.exponentialRampToValueAtTime(180, t + 0.12);
+      g.gain.setValueAtTime(0.35, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      o.connect(g).connect(ac.destination);
+      o.start(t);
+      o.stop(t + 0.16);
+    }
+
+    function startMusic() {
+      const ac = audio();
+      const notes = [523, 659, 784, 659, 587, 698, 880, 698];
+      const master = ac.createGain();
+      master.gain.value = 0.08;
+      master.connect(ac.destination);
+      let step = 0;
+      const play = () => {
+        const t = ac.currentTime;
+        const o = ac.createOscillator();
+        const g = ac.createGain();
+        o.type = "triangle";
+        o.frequency.value = notes[step++ % notes.length];
+        g.gain.setValueAtTime(1, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        o.connect(g).connect(master);
+        o.start(t);
+        o.stop(t + 0.22);
+      };
+      play();
+      const id = setInterval(play, 250);
+      return () => { clearInterval(id); master.disconnect(); };
+    }
+
+    // ---------- Game logic ----------
+    const randomSpot = () => ({ x: Math.random(), y: Math.random() });
+
+    function placeDot() {
+      const s = randomSpot();
+      dot.style.left = `calc((100% - ${DOT_SIZE}px) * ${s.x})`;
+      dot.style.top = `calc((100% - ${DOT_SIZE}px) * ${s.y})`;
+      // Restart the dot-in animation
+      dot.style.animation = "none";
+      void dot.offsetWidth;
+      dot.style.animation = "";
+    }
+
+    function setColoured(coloured, animate) {
+      app.classList.toggle("coloured", coloured);
+      app.classList.toggle("plain", !coloured);
+      if (animate) {
+        sweep.classList.remove("hidden");
+        sweep.style.backgroundColor = coloured ? "var(--pop)" : "var(--background)";
+        sweep.style.animation = "none";
+        void sweep.offsetWidth;
+        sweep.style.animation = `${coloured ? "sweep-out" : "sweep-in"} 700ms ease-out forwards`;
+      }
+    }
+
+    function showScreen(name) {
+      screenStart.classList.toggle("hidden", name !== "start");
+      screenOver.classList.toggle("hidden", name !== "over");
+      scoreFooter.classList.toggle("hidden", name !== "over");
+      playTitle.classList.toggle("hidden", name === "start" || name === "over");
+      area.classList.toggle("hidden", name === "start" || name === "over");
+      hud.classList.toggle("hidden", name === "start" || name === "over");
+      hud.classList.toggle("invisible", name !== "playing");
+      dot.classList.toggle("hidden", name !== "playing");
+      readyOverlay.classList.toggle("hidden", name !== "ready");
+    }
+
+    function updateHud() {
+      hudTime.textContent = `⏱ ${timeLeft}s`;
+      hudScore.textContent = `⭐ ${score}`;
+      const pct = timeLeft / GAME_SECONDS;
+      barFill.style.width = `${pct * 100}%`;
+      barFill.style.background =
+        pct > 0.5 ? "var(--timer-ok)" : pct > 0.25 ? "var(--timer-warn)" : "var(--timer-danger)";
+    }
+
+    function start() {
+      safe(() => audio().resume().catch(() => {}));
+      clearInterval(readyTimer);
+      clearInterval(gameTimer);
+      safe(stopMusic);
+      score = 0;
+      timeLeft = GAME_SECONDS;
+      updateHud();
+      phase = "ready";
+      setColoured(false, true);
+      showScreen("ready");
+      let r = READY_SECONDS;
+      readyCount.textContent = r;
+      readyTimer = setInterval(() => {
+        r -= 1;
+        if (r <= 0) {
+          clearInterval(readyTimer);
+          beginPlay();
+        } else {
+          readyCount.textContent = r;
+          readyCount.style.animation = "none";
+          void readyCount.offsetWidth;
+          readyCount.style.animation = "";
+        }
+      }, 1000);
+    }
+
+    function beginPlay() {
+      phase = "playing";
+      showScreen("playing");
+      placeDot();
+      dot.classList.remove("hidden");
+      safe(() => (stopMusic = startMusic()));
+      gameTimer = setInterval(() => {
+        timeLeft -= 1;
+        updateHud();
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(gameTimer);
+      safe(stopMusic);
+      phase = "over";
+      finalScore.textContent = `⭐ ${score} ${score === 1 ? "dot" : "dots"} popped`;
+      setColoured(true, true);
+      showScreen("over");
+    }
+
+    dot.addEventListener("click", () => {
+      if (phase !== "playing") return;
+      // Pop ring at the dot's centre
+      const ring = document.createElement("span");
+      ring.className = "pop-ring";
+      const rect = dot.getBoundingClientRect();
+      const areaRect = area.getBoundingClientRect();
+      ring.style.left = `${rect.left - areaRect.left + DOT_SIZE / 2}px`;
+      ring.style.top = `${rect.top - areaRect.top + DOT_SIZE / 2}px`;
+      area.appendChild(ring);
+      setTimeout(() => ring.remove(), 500);
+      safe(playPop);
+      score += 1;
+      updateHud();
+      placeDot();
+    });
+
+    document.getElementById("btn-start").addEventListener("click", start);
+    document.getElementById("btn-restart").addEventListener("click", start);
+  </script>
+</body>
+</html>
